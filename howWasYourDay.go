@@ -4,6 +4,7 @@ import (
 	"fmt"
 	// "io/ioutil"
 	"encoding/json"
+	"flag"
 	"github.com/nu7hatch/gouuid"
 	"log"
 	"net/http"
@@ -23,6 +24,7 @@ type StatusUpdate struct {
 }
 
 type App struct {
+	dbUrl string
 }
 
 func Marshel(v interface{}) string {
@@ -73,6 +75,10 @@ func (app App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	app := App{}
+
+	flag.StringVar(&app.dbUrl, "dbUrl", "http://notworking.com", "The url of the redis database")
+	flag.Parse()
+
 	go http.Handle("/", app)
 	http.ListenAndServe("localhost:4000", nil)
 }
