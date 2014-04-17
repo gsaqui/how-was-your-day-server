@@ -24,7 +24,8 @@ type StatusUpdate struct {
 }
 
 type App struct {
-	dbUrl string
+	dbUrl   string
+	channel chan User
 }
 
 func Marshel(v interface{}) string {
@@ -49,6 +50,8 @@ func (app App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			value := r.FormValue("username")
 			user := User{Name: value, UserId: u.String()}
 
+			app.channel <- user
+
 			s := Marshel(user)
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprint(w, s)
@@ -69,16 +72,26 @@ func (app App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		//mongodb://user:secret3@ds045608.mongolab.com:45608/brainbrain
+	}
+}
 
+func (app App) saveNewUser() {
+	for {
+		var user User
+		user = <-app.channel
+		fmt.Println(user.Name)
 	}
 }
 
 func main() {
 	app := App{}
 
+	app.channel = make(chan User)
+
 	flag.StringVar(&app.dbUrl, "dbUrl", "http://notworking.com", "The url of the redis database")
 	flag.Parse()
 
 	go http.Handle("/", app)
+	go app.saveNewUser()
 	http.ListenAndServe("localhost:4000", nil)
 }
