@@ -9,6 +9,7 @@ import (
 	"github.com/nu7hatch/gouuid"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	// "time"
@@ -54,6 +55,27 @@ func UpdateUser(user User, dbUrl string) {
 	defer c.Close()
 }
 
+func FindAllUsers(id string, dbUrl string) User {
+	c, err := redis.Dial("tcp", dbUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c.Send("GET", id)
+	c.Flush()
+	v, err := redis.Bytes(c.Receive())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer c.Close()
+
+	var m User
+	err = json.Unmarshal(v, &m)
+
+	return m
+}
+
 func (app App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "POST" {
@@ -93,8 +115,23 @@ func (app App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprint(w, s)
 		}
+	}
 
-		//mongodb://user:secret3@ds045608.mongolab.com:45608/brainbrain
+	if r.Method == "GET" {
+		regularExpressions, _ := regexp.Compile("allupdates/([a-zA-Z0-9].*)")
+		path := strings.ToLower(r.URL.Path)
+
+		if regularExpressions.MatchString(path) {
+			//we should really add some error checking here
+			uuidOfUser := regularExpressions.FindStringSubmatch(path)[1]
+			fmt.Println(uuidOfUser)
+
+			tempUser3 := FindAllUsers(uuidOfUser, app.dbUrl)
+			fmt.Println(tempUser3)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, tempUser3.Name)
+		}
+
 	}
 }
 
@@ -136,7 +173,6 @@ func (app App) updateUser() {
 }
 
 func main() {
-	//"e27ae04a-63d6-41d5-74ce-98ffb3d23b9d"
 	app := App{}
 
 	app.channel = make(chan User)
