@@ -127,9 +127,9 @@ func (app App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(uuidOfUser)
 
 			tempUser3 := FindAllUsers(uuidOfUser, app.dbUrl)
-			fmt.Println(tempUser3)
+			//fmt.Println(tempUser3)
 			w.Header().Set("Content-Type", "application/json")
-			fmt.Fprint(w, tempUser3.Name)
+			fmt.Fprint(w, tempUser3)
 		}
 
 	}
@@ -164,9 +164,9 @@ func (app App) updateUser() {
 			log.Fatal(err)
 		}
 
-		fmt.Println(user.Name, user.UserStatuses)
+		//fmt.Println(user.Name, user.UserStatuses)
 		user.UserStatuses = append(user.UserStatuses, statusUpdate)
-		fmt.Println(user.Name, user.UserStatuses)
+		//fmt.Println(user.Name, user.UserStatuses)
 		UpdateUser(user, app.dbUrl)
 		defer c.Close()
 	}
